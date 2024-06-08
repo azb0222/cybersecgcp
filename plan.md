@@ -10,3 +10,6 @@ TODO:
 - make sure to delete any old resources in GCP 
 
 - come back and organize resources based on tags/labels/etc. https://medium.com/@leilaalvess/labels-and-tags-in-google-cloud-24e3718c87e6
+
+
+- TODO: set default region/zone in providers.tf so dont have to set for each provider? 

@@ -1,28 +1,29 @@
-locals { 
-    access_list = jsondecode(file("${path.module}/accessList.json"))
-    eboard_user_emails = [
-        for email in local.access_list.groups[0] : email         
-    ]
-    devops_user_emails = [
-        for email in local.access_list.groups[1] : email         
-    ]
+resource "random_id" "bucket_prefix" {
+  byte_length = 8
 }
 
-locals { 
-    projects = jsondecode(file("${path.module}/projects.json"))
-    project_ids = [
-        for name in local.projects.project_names: "${projects.project_id}${name}"
-    ]
-    project_names = [
-        for name in local.projects.project_names: name 
-    ]
+resource "google_storage_bucket" "tfstate" {
+  name          = "${random_id.bucket_prefix.hex}-bucket-tfstate"
+  provider = google.general //TODO automate?  
+  force_destroy = false
+  location      = "US"
+  storage_class = "STANDARD"
+  versioning {
+    enabled = true
+  }
+#   encryption {
+#     default_kms_key_name = google_kms_crypto_key.terraform_state_bucket.id
+#   }
+#   depends_on = [
+#     google_project_iam_member.default
+#   ]
 }
 
-#TODO: delete after 
-output "devops" { 
-    value = local.devops_user_emails
-}
-
-output "eboard" { 
-    value = local.eboard_user_emails
-}
+# #========== AUTO GENERATED ==========
+# module "access" {
+#     source = "./modules/access"
+#     providers = {
+#         google.general = google.general
+# 		google.training = google.training
+#     }
+# }

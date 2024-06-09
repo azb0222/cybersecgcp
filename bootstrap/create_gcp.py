@@ -1,23 +1,17 @@
 from gcloud import resource_manager
 from typing import Optional
-from google.cloud import iam_admin_v1
+from google.cloud import iam_admin_v1, storage
 from google.cloud.iam_admin_v1 import types
-from google.cloud import storage
 import random
 import string
 
-#TODO: move to shared var w/ generate_tf.py in a bit
-providers_dicts= [
-    {"alias": "general", "project": "general", "credentials": "general"}, 
-    {"alias": "training", "project": "training", "credentials": "training"}, 
-]
+from config import PROJECT_ID_PREFIX, PROVIDERS
 
 client = resource_manager.Client()
-project_id_prefix = "umass-cybersec"
 
 def projects(): 
-    for provider in providers_dicts:
-        project_id = project_id_prefix + provider['project'] 
+    for provider in PROVIDERS:
+        project_id = PROJECT_ID_PREFIX + provider['project'] 
         try:
             client.fetch_project(project_id)
             print("alr created")
@@ -34,16 +28,16 @@ def projects():
 
 #TODO: only create service accounts if they don't exist
 def service_accounts():
-    for provider in providers_dicts:
+    for provider in PROVIDERS:
         # create service account
-        project_id = project_id_prefix + provider['project'] 
+        project_id = PROJECT_ID_PREFIX + provider['project'] 
         create_service_account(project_id, "tftestasritha")
         # create service account key 
 
         # create service account IAM policy binding 
 
 def tfstate_bucket(): 
-    storage_client = storage.Client(project=providers_dicts[0]["project"]) #the general project
+    storage_client = storage.Client(project=PROVIDERS[0]["project"]) #the general project
     random_string = ''.join(random.choices(string.ascii_lowercase+ string.digits, k=6))
     bucket_name = random_string + "_umasscybersec_tfstate"
     bucket = storage_client.bucket(bucket_name)
@@ -79,7 +73,7 @@ def create_service_account(
     service_account = types.ServiceAccount()
     service_account.display_name = display_name
     request.service_account = service_account
-
+    iam_admin_client.get_service_account()
     account = iam_admin_client.create_service_account(request=request)
 
     print(f"Created a service account: {account.email}")

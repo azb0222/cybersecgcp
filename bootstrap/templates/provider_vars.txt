@@ -1,0 +1,5 @@
+    {
+        alias: "{{ alias }}"
+        project_name: "{{ project_name }}"
+        credentials: "{{ credentials }}"
+    }

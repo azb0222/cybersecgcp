@@ -1,4 +1,6 @@
-TODO: 
+TODO:
+- use templating?
+- automate bucket creation  
 - finish setting up any organizational resources 
 - set up training platform + automation system 
 - clean up entire AWS

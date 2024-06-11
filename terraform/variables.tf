@@ -2,7 +2,8 @@
 variable "providers" {
     type = list(object({
         alias = string 
-        project_name = string 
+        project = string 
         credentials = string 
     }))
+    default = jsondecode(file("./data/project.json"))["providers"]
 }

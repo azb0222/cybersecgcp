@@ -1,16 +1,21 @@
+from os.path import join
+import json
+
+from config import DATA_PATH
 import generate_tf
 import create_gcp 
 import boostrap_tf 
-# requirements.txt file?
+
+with open(join(DATA_PATH, "project.json")) as f:
+    projects = json.load(f)
 
 # authenticate with `gcloud auth application-default login`
 # create_gcp.projects()
-# create_gcp.service_accounts()
-create_gcp.tfstate_bucket()
+create_gcp.service_accounts()
+bucket = create_gcp.tfstate_bucket()
 
 generate_tf.providers() 
-generate_tf.provider_vars() 
-#TODO: generate_tf.backend()
+generate_tf.backend(bucket)
 
 boostrap_tf.init_and_apply()
 '''

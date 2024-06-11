@@ -1,5 +1,3 @@
-
-
 #========== AUTO GENERATED ==========
 
 provider "google" { 

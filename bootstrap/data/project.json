@@ -1,0 +1,15 @@
+{
+    "project_id_prefix": "umass-cybersec-",
+    "providers": {
+        "general": {
+            "alias": "general",
+            "project": "general",
+            "credentials": "general"
+        },
+        "training": {
+            "alias": "training",
+            "project": "training",
+            "credentials": "training"
+        }
+    }
+}

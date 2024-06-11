@@ -3,8 +3,8 @@ from typing import Optional
 from google.cloud import iam_admin, storage
 import random
 import string
-import json
 from os.path import join
+from google.iam.v1 import iam_policy_pb2  # type: ignore
 
 from config import PROJECT_DATA_T, KEY_PATH
 
@@ -31,11 +31,13 @@ def service_accounts(project_data: PROJECT_DATA_T):
         
     for provider in project_data["providers"].values():
         project_id = project_data["project_id_prefix"] + provider['project'] 
-
+        service_account = f"terraform_sa{project_id}"
+        resource = f"projects/{project_id}/serviceAccounts/{service_account}"
+        #resource = "projects/umass-cybersec-general/serviceAccounts/terraform-account@umass-cybersec-general.iam.gserviceaccount.com"
         try:
             client.create_service_account({
                 "name": project_id,
-                "account_id": "terraform_sa" + project_id
+                "account_id": service_account
             })
         except(Exception) as e:
             print(f"[INFO] Did not create account for {project_id} because:")
@@ -43,19 +45,26 @@ def service_accounts(project_data: PROJECT_DATA_T):
         # create service account key 
         try:
             key = client.create_service_account_key({
-              "name": project_id  
+              "name": resource  
             })
-            with open(join(KEY_PATH, provider["project"])) as f:
-                json.dump(key, f)
+            with open(join(KEY_PATH, provider["project"]), 'wb') as f:
+                f.write(key.private_key_data)
+        
         except(Exception) as e:
             print(f"[INFO] Did not create account key for {project_id} because:")
             print(e)
         
         # create service account IAM policy binding
         try:
-            client.create_role
-            p = client.get_iam_policy()
-                 
+            
+            policy = client.get_iam_policy(resource=resource)
+            # request = iam_policy_pb2.GetIamPolicyRequest(resource = resource)
+            binding = {"role": "roles/editor"}
+            policy["bindings"].append(binding)
+            response = client.set_iam_policy(request=policy)
+            
+            
+            
 
 def tfstate_bucket(project_data: PROJECT_DATA_T) -> storage.Bucket: 
     storage_client = storage.Client(project=project_data["project_id_prefix"] + project_data["providers"]["general"]["project"]) #the general project

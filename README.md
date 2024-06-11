@@ -10,7 +10,7 @@ To create a new project, run:
 ## GCP Structure 
 
 #### Projects 
-1) **General**: hosts any general resources 
+1) **General**: hosts any general resources, TODO: manage our DNS here too 
 2) **Training Platform** //Cloud Run, Cloud Build 
 3) **UMassCTF_Internal 2024** 
 4) **LoadTesting** //we will shut off unless actively using 

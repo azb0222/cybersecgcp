@@ -3,7 +3,9 @@ certifi==2024.6.2
 charset-normalizer==3.3.2
 gcloud==0.18.3
 google-api-core==2.19.0
+google-api-python-client==2.133.0
 google-auth==2.30.0
+google-auth-httplib2==0.2.0
 google-cloud-core==2.4.1
 google-cloud-iam==2.15.0
 google-cloud-storage==2.16.0
@@ -26,5 +28,7 @@ pyparsing==3.1.2
 python-terraform==0.10.1
 requests==2.32.3
 rsa==4.9
+setuptools==70.0.0
 six==1.16.0
+uritemplate==4.1.1
 urllib3==2.2.1

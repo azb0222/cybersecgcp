@@ -9,7 +9,7 @@ TERRAFORM_PATH = join(BASE_PATH, "../terraform")
 KEY_PATH = join(TERRAFORM_PATH, "keys")
 DATA_PATH = join(BASE_PATH, "data")
 
-PROJECT_DATA_T = dict[str, str | dict[str, dict[str, str]]]
+PROJECT_DATA_T = dict[str, str | bool]
 
 
 BANNER = "#" + "=" * 10 + " AUTO GENERATED " + "=" * 10 + "\n\n"

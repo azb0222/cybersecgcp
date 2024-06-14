@@ -10,14 +10,14 @@ with open(join(DATA_PATH, "project.json")) as f:
     projects = json.load(f)
 
 # authenticate with `gcloud auth application-default login`
-create_gcp.projects()
-create_gcp.service_accounts()
-bucket = create_gcp.tfstate_bucket()
+create_gcp.projects(projects)
+create_gcp.service_accounts(projects)
+# bucket = create_gcp.tfstate_bucket()
 
-generate_tf.providers() 
-generate_tf.backend(bucket)
+# generate_tf.providers() 
+# generate_tf.backend(bucket)
 
-boostrap_tf.init_and_apply()
+# boostrap_tf.init_and_apply()
 
 '''
 PROJECT_FILE = "data/projects.json"

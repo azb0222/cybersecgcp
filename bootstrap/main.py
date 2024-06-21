@@ -6,18 +6,37 @@ import generate_tf
 import create_gcp 
 import boostrap_tf 
 
-with open(join(DATA_PATH, "project.json")) as f:
-    projects = json.load(f)
+#############################################################
+# authenticate with `gcloud auth application-default login' #
+#############################################################
 
-# authenticate with `gcloud auth application-default login`
-create_gcp.projects(projects)
-create_gcp.service_accounts(projects)
-# bucket = create_gcp.tfstate_bucket()
+with open(join(DATA_PATH, "project.json")) as f:
+    project_data = json.load(f)
+
+action_states, bucket = create_gcp.create_gcp(project_data)
+
+with open(join(DATA_PATH, "project.json"), 'w') as f:
+    json.dump(project_data, f)
+
 
 # generate_tf.providers() 
+# generate_tf.data()
 # generate_tf.backend(bucket)
 
 # boostrap_tf.init_and_apply()
+
+print("""\n\n\n
+Post Deployment Summary:
+""")
+for project in action_states:
+    project_action_states = action_states[project]
+    print(f"""{project}:
+    Make project: {project_action_states['make_project'].value}
+        Make service account: {project_action_states['make_account'].value}
+            Make service account key: {project_action_states['make_key'].value}
+            Configure service account: {project_action_states['config_account'].value}
+""")
+print("")
 
 '''
 PROJECT_FILE = "data/projects.json"

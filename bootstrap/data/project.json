@@ -1,15 +1,14 @@
 {
-    "project_id_prefix": "umass-cybersec-",
+    "project_id_prefix": "umass-cybersec2-",
+    "tf_state_project": "general",
     "providers": {
         "general": {
             "alias": "general",
-            "project": "general",
-            "credentials": "general"
+            "credentials": "../keys/tf-sa1-general.json"
         },
-        "training": {
+        "training4": {
             "alias": "training",
-            "project": "training",
-            "credentials": "training"
+            "credentials": "../keys/tf-sa1-training4.json"
         }
     }
 }

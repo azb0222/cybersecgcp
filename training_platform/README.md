@@ -1,1 +1,0 @@
-## To upload a new challenge: make a new directory in the challenges directory. Each challenge must have a Dockerfile

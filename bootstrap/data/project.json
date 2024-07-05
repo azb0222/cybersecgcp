@@ -3,12 +3,10 @@
     "tf_state_project": "general1",
     "providers": {
         "general1": {
-            "alias": "general",
-            "credentials": "../keys/tf-sa1-general1.json"
+            "alias": "general"
         },
         "training1": {
-            "alias": "training",
-            "credentials": "../keys/tf-sa1-training1.json"
+            "alias": "training"
         }
     }
 }

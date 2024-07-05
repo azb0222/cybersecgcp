@@ -10,8 +10,13 @@ import boostrap_tf
 # authenticate with `gcloud auth application-default login' #
 #############################################################
 
-with open(join(DATA_PATH, "project.json")) as f:
-    project_data = json.load(f)
+print("[INFO] Loading project data...")
+try:
+    with open(join(DATA_PATH, "project.json")) as f:
+        project_data = json.load(f)
+except Exception as e:
+    print(f"[ERROR] Unable to load project data because:\n{e}")
+    exit(1)
 
 action_states, bucket = create_gcp.create_gcp(project_data)
 
@@ -19,24 +24,15 @@ with open(join(DATA_PATH, "project-generated.json"), 'w') as f:
     f.write(BANNER)
     json.dump(project_data, f)
 
-def any_failed() -> bool:
+def any_state(state: ActionState) -> bool:
     for p_action_states in action_states.values():
         for action_state in p_action_states.values():
-            if action_state == ActionState.FAILED:
+            if action_state == state:
                 return True
     return False
 
-if any_failed():
-    print("[ERROR] Can not generate tf")
-#TODO fix this(add logging and check if bucket made)
-# generate_tf.providers() 
-# generate_tf.data()
-# generate_tf.backend(bucket)
-
-# boostrap_tf.init_and_apply()
-
 print("""\n\n
-Post Deployment Summary:
+GCP Post Deployment Summary:
 """)
 for project in action_states:
     project_action_states = action_states[project]
@@ -46,7 +42,26 @@ for project in action_states:
             Make service account key: {project_action_states['make_key'].value}
             Configure service account: {project_action_states['config_account'].value}
 """)
-print(f"State Bucket: {action_states[project_data['tf_state_project']]["make_bucket"].value}")
+print(f"State Bucket: {action_states[project_data['tf_state_project']]["make_bucket"].value}\n\n")
+
+if any_state(ActionState.FAILED):
+    print("[ERROR] GCP was not generated correctly so terraform will not be made. Please fix the errors and try again.")
+if any_state(ActionState.EXISTS):
+    print("[WARNING] GCP had resources that already existed. These may not be configured correctly so please review them.")
+    if input("Type yes to continue: ") != "yes":
+        exit(1)
+
+#TODO fix this(add logging and check if bucket made)
+action_states = generate_tf.generate_tf(project_data, bucket)
+print("""\n\n
+Terraform Generation Summary:
+""")
+for action in action_states:
+    print(f
+""")
+
+# boostrap_tf.init_and_apply()
+
 
 '''
 PROJECT_FILE = "data/projects.json"

@@ -130,3 +130,7 @@ def create_gcp(project_data : PROJECT_DATA_T) -> tuple[dict[str, dict[str, Actio
     all_action_states[tf_bucket_project_name]['make_bucket'], bucket = __make_tfstate_bucket(project_data['project_id_prefix'] + tf_bucket_project_name)
 
     return all_action_states, bucket
+
+
+if __name__ == "__main__":
+    create_gcp()

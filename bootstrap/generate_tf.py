@@ -7,7 +7,7 @@ from config import BANNER, TEMPLATE_PATH, from_terraform, DATA_PATH, PROJECT_DAT
 
 environment = Environment(loader=FileSystemLoader(TEMPLATE_PATH))
 
-def make_providers(project_data: PROJECT_DATA_T) -> ActionState:
+def __make_providers(project_data: PROJECT_DATA_T) -> ActionState:
     print("[INFO] Generating provider.tf")
     try:
         provider_template = environment.get_template("provider.txt")
@@ -21,7 +21,7 @@ def make_providers(project_data: PROJECT_DATA_T) -> ActionState:
         print(f"[ERROR] Could not generate provider.tf because:\n{e}")
         return ActionState.FAILED
 
-def copy_data() -> ActionState:
+def __copy_data() -> ActionState:
     print("[INFO] Copying data into terraform")
     try:
         copy(DATA_PATH, from_terraform("data"))
@@ -30,7 +30,7 @@ def copy_data() -> ActionState:
         print(f"[ERROR] Could not copy data because:\n{e}")
         return ActionState.FAILED
 
-def make_backend(bucket: Bucket) -> ActionState:
+def __make_backend(bucket: Bucket) -> ActionState:
     print("[INFO] Generating backend.tf")
     try:
         backend_template = environment.get_template("backend.txt")
@@ -44,7 +44,10 @@ def make_backend(bucket: Bucket) -> ActionState:
     
 def generate_tf(project_data: PROJECT_DATA_T, bucket: Bucket) -> dict[str, ActionState]:
     return {
-        "make_providers": make_providers(project_data),
-        "copy_data": copy_data(),
-        "make_backend": make_backend(bucket),
+        "make_providers": __make_providers(project_data),
+        "copy_data": __copy_data(),
+        "make_backend": __make_backend(bucket),
     }
+
+if __name__ == "__main__":
+    generate_tf()

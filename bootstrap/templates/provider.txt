@@ -1,0 +1,7 @@
+provider "google" { 
+    alias = "{{ alias }}"
+    project = "{{ project }}"
+    credentials = "{{ credentials }}"
+    region = "us-east1"
+    zone = "us-east1-b"
+}

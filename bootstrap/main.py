@@ -1,7 +1,7 @@
 from os.path import join
 import json
 
-from config import DATA_PATH
+from config import DATA_PATH, ActionState, BANNER
 import generate_tf
 import create_gcp 
 import boostrap_tf 
@@ -15,17 +15,27 @@ with open(join(DATA_PATH, "project.json")) as f:
 
 action_states, bucket = create_gcp.create_gcp(project_data)
 
-with open(join(DATA_PATH, "project.json"), 'w') as f:
+with open(join(DATA_PATH, "project-generated.json"), 'w') as f:
+    f.write(BANNER)
     json.dump(project_data, f)
 
+def any_failed() -> bool:
+    for p_action_states in action_states.values():
+        for action_state in p_action_states.values():
+            if action_state == ActionState.FAILED:
+                return True
+    return False
 
+if any_failed():
+    print("[ERROR] Can not generate tf")
+#TODO fix this(add logging and check if bucket made)
 # generate_tf.providers() 
 # generate_tf.data()
 # generate_tf.backend(bucket)
 
 # boostrap_tf.init_and_apply()
 
-print("""\n\n\n
+print("""\n\n
 Post Deployment Summary:
 """)
 for project in action_states:
@@ -36,7 +46,7 @@ for project in action_states:
             Make service account key: {project_action_states['make_key'].value}
             Configure service account: {project_action_states['config_account'].value}
 """)
-print("")
+print(f"State Bucket: {action_states[project_data['tf_state_project']]["make_bucket"].value}")
 
 '''
 PROJECT_FILE = "data/projects.json"

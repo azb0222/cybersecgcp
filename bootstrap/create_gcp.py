@@ -127,6 +127,6 @@ def create_gcp(project_data : PROJECT_DATA_T) -> tuple[dict[str, dict[str, Actio
         action_states['config_account'] = __config_service_account(project_id, principal)
     
     tf_bucket_project_name = project_data['tf_state_project']
-    # all_action_states[tf_bucket_project_name]['make_bucket'], bucket = __make_tfstate_bucket(project_data['project_id_prefix'] + tf_bucket_project_name)
+    all_action_states[tf_bucket_project_name]['make_bucket'], bucket = __make_tfstate_bucket(project_data['project_id_prefix'] + tf_bucket_project_name)
 
-    return all_action_states, None #bucket
+    return all_action_states, bucket

@@ -3,11 +3,14 @@ from enum import Enum
 from termcolor import colored
 
 BASE_PATH = dirname(realpath(__file__))
+from_base = lambda path : join(BASE_PATH, path)
+from_terraform = lambda path : join(TERRAFORM_PATH, path)
 
-TEMPLATE_PATH = join(BASE_PATH, "templates")
-TERRAFORM_PATH = join(BASE_PATH, "../terraform")
-KEY_PATH = join(TERRAFORM_PATH, "keys")
-DATA_PATH = join(BASE_PATH, "data")
+
+TEMPLATE_PATH = from_base("templates")
+TERRAFORM_PATH = from_base("../terraform")
+KEY_PATH = from_terraform("keys")
+DATA_PATH = from_base("data")
 
 PROJECT_DATA_T = dict[str, str | dict[str, dict[str, str]]]
 

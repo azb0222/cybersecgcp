@@ -1,6 +1,6 @@
 resource "google_artifact_registry_repository" "challenge-images" {
   location      = var.region
-  repository_id = 
+  repository_id = "challenge-images"
   description   = "example docker repository"
   format        = "DOCKER"
 }

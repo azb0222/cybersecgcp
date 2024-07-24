@@ -1,4 +1,3 @@
-from os import path
 from shutil import copytree
 from jinja2 import Environment, FileSystemLoader
 from gcloud.storage import Bucket
@@ -13,7 +12,8 @@ def __make_providers(project_data: PROJECT_DATA_T) -> ActionState:
         provider_template = environment.get_template("provider.txt")
         with open(from_terraform("providers.tf"), "w") as f:
             f.write(BANNER)
-            for provider in project_data["providers"].values():
+            for project, provider in project_data["providers"].items():
+                provider['project'] = project
                 content = provider_template.render(provider)
                 f.write(f"{content}\n")
         return ActionState.COMPLTE

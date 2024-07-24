@@ -37,6 +37,8 @@ for project in action_states:
     project_action_states = action_states[project]
     print(f"""{project}:
     Make project: {project_action_states['make_project'].value}
+        Enable APIs: {project_action_states['enable_apis'].value}
+        Link billing account: {project_action_states['link_billing'].value}
         Make service account: {project_action_states['make_account'].value}
             Make service account key: {project_action_states['make_key'].value}
             Configure service account: {project_action_states['config_account'].value}
@@ -53,19 +55,19 @@ if any_state(ActionState.EXISTS):
 
 #TODO fix this(add logging and check if bucket made)
 action_states = generate_tf.generate_tf(project_data, bucket)
-print("""\n\n
+print("""\n
 Terraform Generation Summary:
 """)
 for task, result in action_states.items():
-    print(f"\t{task.replace("_", " ").capitalize()}: {result.value}")
-print("\n\n")
+    print(f"    {task.replace("_", " ").capitalize()}: {result.value}")
+print("\n")
 
 if ActionState.FAILED in action_states.values():
     print("[ERROR] Unable to generate tf. Please fix the errors and try again.")
     exit(1)
 
 if input("Ready to bootstap terraform! Type yes to continue: ") != "yes":
-        exit(1)
+    exit(1)
 
 boostrap_tf.init_and_apply()
 

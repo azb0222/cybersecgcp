@@ -1,0 +1,10 @@
+{
+    "groups": {
+        "eboard": {
+            "emails": ["lkliu@umass.edu"]
+        }, 
+        "devops": { 
+            "emails": ["abodepudi@umass.edu", "asrithabodepudi@gmail.com", "ogpatel@umass.edu"]
+        }
+    }
+}

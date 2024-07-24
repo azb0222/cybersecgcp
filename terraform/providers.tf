@@ -2,15 +2,15 @@
 
 provider "google" { 
     alias = "general"
-    project = ""
-    credentials = "../keys/tf-sa1-general12.json"
+    project = "general14"
+    credentials = "../keys/tf-sa1-general14.json"
     region = "us-east1"
     zone = "us-east1-b"
 }
 provider "google" { 
     alias = "training"
-    project = ""
-    credentials = "../keys/tf-sa1-training8.json"
+    project = "training7"
+    credentials = "../keys/tf-sa1-training7.json"
     region = "us-east1"
     zone = "us-east1-b"
 }

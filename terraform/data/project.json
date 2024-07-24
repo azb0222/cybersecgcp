@@ -1,0 +1,19 @@
+{
+    "project_id_prefix": "umass-cybersec3-",
+    "billing_account_id": "01ECF2-0C4FDB-AA6DEE",
+    "tf_state_project": "general14",
+    "providers": {
+        "general14": {
+            "alias": "general",
+            "apis": [
+                "cloudbilling"
+            ]
+        },
+        "training7": {
+            "alias": "training",
+            "apis": [
+                "cloudbilling"
+            ]
+        }
+    }
+}

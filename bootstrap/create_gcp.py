@@ -9,6 +9,8 @@ from os import system, makedirs
 
 from config import PROJECT_DATA_T, KEY_PATH, ActionState
 
+print("[INFO] Creating GCP clients...")
+
 resource_client = resource_manager.Client()
 iam_client = iam_admin.IAMClient()
 discovery_client = discovery.build('iam', 'v1')
@@ -38,10 +40,10 @@ def __make_project(project_id: str, project_name: str) -> ActionState:
 
 #TODO make seperate action states for each api
 def __enable_apis(project_id : str, apis : list[str]) -> ActionState:
-    print(f"[INFO] Enabling APIs for {project_id}")
+    print(f"[INFO] Enabling APIs for {project_id}...")
     try:
         for api in apis:
-            print(f"[INFO] Enabling {api} API")
+            print(f"[INFO] Enabling {api} API...")
             req = service_usage.EnableServiceRequest(name=f"projects/{project_id}/services/{api}.googleapis.com")
             resp = service_client.enable_service(request=req).result()
             if(resp.service.state != service_usage.State.ENABLED):
@@ -52,7 +54,7 @@ def __enable_apis(project_id : str, apis : list[str]) -> ActionState:
         return ActionState.FAILED
 
 def __link_billing_account(project_id, billing_account_id):
-    print(f"[INFO] Linking billing account {billing_account_id} to project {project_id}")
+    print(f"[INFO] Linking billing account {billing_account_id} to project {project_id}...")
     try:
         resource = f"projects/{project_id}"
         project_billing_info = {"billing_account_name": f"billingAccounts/{billing_account_id}"} 
@@ -113,6 +115,8 @@ def __make_service_account_key(account_id, resource, project_data) -> ActionStat
     key_file_name = f"{join(KEY_PATH, account_id)}.json"
     if isfile(key_file_name):
         print(f"[INFO] Key for {account_id} already exists")
+        #TODO make not hardcoded
+        project_data['credentials'] = f"../keys/{account_id}.json"
         return ActionState.EXISTS
     
     print(f"[INFO] Generating key for {account_id}")

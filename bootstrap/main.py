@@ -1,7 +1,7 @@
 from os.path import join
 import json
 
-from config import DATA_PATH, ActionState, BANNER
+from config import DATA_PATH, ActionState
 import generate_tf
 import create_gcp 
 import boostrap_tf 
@@ -21,7 +21,6 @@ except Exception as e:
 action_states, bucket = create_gcp.create_gcp(project_data)
 
 with open(join(DATA_PATH, "project-generated.json"), 'w') as f:
-    f.write(BANNER)
     json.dump(project_data, f)
 
 def any_state(state: ActionState) -> bool:
@@ -31,7 +30,7 @@ def any_state(state: ActionState) -> bool:
                 return True
     return False
 
-print("""\n\n
+print("""\n
 GCP Post Deployment Summary:
 """)
 for project in action_states:
@@ -46,6 +45,7 @@ print(f"State Bucket: {action_states[project_data['tf_state_project']]["make_buc
 
 if any_state(ActionState.FAILED):
     print("[ERROR] GCP was not generated correctly so terraform will not be made. Please fix the errors and try again.")
+    exit(1)
 if any_state(ActionState.EXISTS):
     print("[WARNING] GCP had resources that already existed. These may not be configured correctly so please review them.")
     if input("Type yes to continue: ") != "yes":
@@ -56,11 +56,18 @@ action_states = generate_tf.generate_tf(project_data, bucket)
 print("""\n\n
 Terraform Generation Summary:
 """)
-for action in action_states:
-    print(f
-""")
+for task, result in action_states.items():
+    print(f"\t{task.replace("_", " ").capitalize()}: {result.value}")
+print("\n\n")
 
-# boostrap_tf.init_and_apply()
+if ActionState.FAILED in action_states.values():
+    print("[ERROR] Unable to generate tf. Please fix the errors and try again.")
+    exit(1)
+
+if input("Ready to bootstap terraform! Type yes to continue: ") != "yes":
+        exit(1)
+
+boostrap_tf.init_and_apply()
 
 
 '''

@@ -1,5 +1,5 @@
 from os import path
-from shutil import copy
+from shutil import copytree
 from jinja2 import Environment, FileSystemLoader
 from gcloud.storage import Bucket
 
@@ -24,7 +24,7 @@ def __make_providers(project_data: PROJECT_DATA_T) -> ActionState:
 def __copy_data() -> ActionState:
     print("[INFO] Copying data into terraform")
     try:
-        copy(DATA_PATH, from_terraform("data"))
+        copytree(DATA_PATH, from_terraform("data"), dirs_exist_ok=True)
         return ActionState.COMPLTE
     except Exception as e:
         print(f"[ERROR] Could not copy data because:\n{e}")

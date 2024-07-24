@@ -1,5 +1,7 @@
 from gcloud import resource_manager
-from google.cloud import iam_admin, storage
+from google.cloud import iam_admin, storage, service_usage, billing
+from googleapiclient import discovery
+
 import random
 import string
 from os.path import join, isfile
@@ -9,9 +11,9 @@ from config import PROJECT_DATA_T, KEY_PATH, ActionState
 
 resource_client = resource_manager.Client()
 iam_client = iam_admin.IAMClient()
-
-project_ids = list(map(lambda proj : proj.project_id, resource_client.list_projects()))
-print(f"[INFO] Found the following projects already: {project_ids}")
+discovery_client = discovery.build('iam', 'v1')
+service_client = service_usage.ServiceUsageClient()
+billing_client = billing.CloudBillingClient()
 
 def __make_project(project_id: str, project_name: str) -> ActionState:    
         project = resource_client.new_project(
@@ -25,14 +27,44 @@ def __make_project(project_id: str, project_name: str) -> ActionState:
         
         print(f"[INFO] Creating project {project_id}")
         try:
-            
             project.create()
             project.labels = {"source": "tf"}
             project.update()
+            
             return ActionState.COMPLTE
         except Exception as e:
             print(f"[ERROR] Unable to create project {project_id} because:\n{e}") 
             return ActionState.FAILED
+
+#TODO make seperate action states for each api
+def __enable_apis(project_id : str, apis : list[str]) -> ActionState:
+    print(f"[INFO] Enabling APIs for {project_id}")
+    try:
+        for api in apis:
+            print(f"[INFO] Enabling {api} API")
+            req = service_usage.EnableServiceRequest(name=f"projects/{project_id}/services/{api}.googleapis.com")
+            resp = service_client.enable_service(request=req).result()
+            if(resp.service.state != service_usage.State.ENABLED):
+                raise Exception(f"Failed to enable {api}")
+        return ActionState.COMPLTE
+    except Exception as e:
+        print(f"[ERROR] Unable to enable apis for {project_id} because:\n{e}") 
+        return ActionState.FAILED
+
+def __link_billing_account(project_id, billing_account_id):
+    print(f"[INFO] Linking billing account {billing_account_id} to project {project_id}")
+    try:
+        resource = f"projects/{project_id}"
+        project_billing_info = {"billing_account_name": f"billingAccounts/{billing_account_id}"} 
+        req = billing.UpdateProjectBillingInfoRequest(
+            name=resource,
+            project_billing_info=project_billing_info
+            )
+        billing_client.update_project_billing_info(request=req)
+        return ActionState.COMPLTE
+    except Exception as e:
+        print(f"[ERROR] Unable to link billing account {billing_account_id} to {project_id} because:\n{e}") 
+        return ActionState.FAILED
 
 def __make_service_account(project_id, account_id, resource) -> ActionState:
     accounts = iam_client.list_service_accounts({"name": f"projects/{project_id}"})    
@@ -54,14 +86,27 @@ def __make_service_account(project_id, account_id, resource) -> ActionState:
         return ActionState.FAILED
 
 def __config_service_account(project_id, principal) -> ActionState:
-    # create service account IAM policymakedirs(KEY_PATH, exist_ok=True) binding
-    # TODO dont use system & create custom role for service accounts
+    # create service account IAM policymakedirs binding
+    # TODO create custom role for service accounts
     print(f"[INFO] Creating role binding for {principal}")
-    res = system(f"gcloud iam service-accounts add-iam-policy-binding {principal} --member='serviceAccount:{principal}' --role='roles/editor' --project='{project_id}'")
-    if res != 0:
-        print(f"[ERROR] Did not create account binding for {principal} because command exited with code {res}")
+    try:
+        resource = f"projects/{project_id}/serviceAccounts/{principal}"
+        policy = discovery_client.projects().serviceAccounts().getIamPolicy(resource=resource).execute()
+        if not "bindings" in policy:
+            policy["bindings"] = []
+        policy["bindings"].append({
+                "role": "roles/editor",
+                "members": [
+                    f"serviceAccount:{principal}"
+                ]
+            })
+
+        body = {"policy": policy}
+        discovery_client.projects().serviceAccounts().setIamPolicy(resource=resource, body=body).execute()
+        return ActionState.COMPLTE
+    except Exception as e:
+        print(f"[ERROR] Failed to create role binding for {principal} because:\n{e}")
         return ActionState.FAILED
-    return ActionState.COMPLTE
 
 def __make_service_account_key(account_id, resource, project_data) -> ActionState:
     # create service account key
@@ -84,7 +129,7 @@ def __make_service_account_key(account_id, resource, project_data) -> ActionStat
         print(f"[ERROR] Failed to generate key for {account_id} because:\n{e}")
         return ActionState.FAILED
 
-def __make_tfstate_bucket(project_id) -> tuple[ActionState, storage.Bucket | None]: 
+def __make_tfstate_bucket(project_id) -> tuple[ActionState, storage.Bucket | None]:  
     storage_client = storage.Client(project=project_id) #the general project
     random_string = ''.join(random.choices(string.ascii_lowercase+ string.digits, k=6))
     bucket_name = random_string + "_umasscybersec_tfstate"
@@ -99,8 +144,17 @@ def __make_tfstate_bucket(project_id) -> tuple[ActionState, storage.Bucket | Non
         return ActionState.FAILED, None
 
 def create_gcp(project_data : PROJECT_DATA_T) -> tuple[dict[str, dict[str, ActionState]], storage.Bucket | None]:
+    global project_ids
+    
     makedirs(KEY_PATH, exist_ok=True)
     all_action_states = {}
+
+    billing_account_id = project_data["billing_account_id"]
+    tf_bucket_project_name = project_data['tf_state_project']
+
+    print("[INFO] Retrieving existing projects...")
+    project_ids = list(map(lambda proj : proj.project_id, resource_client.list_projects()))
+    print(f"[INFO] Found the following projects already: {project_ids}")
 
     for project_name in project_data['providers']:
         project_id = project_data["project_id_prefix"] + project_name 
@@ -108,12 +162,14 @@ def create_gcp(project_data : PROJECT_DATA_T) -> tuple[dict[str, dict[str, Actio
         principal = f"{account_id}@{project_id}.iam.gserviceaccount.com"
         resource = f"projects/{project_id}/serviceAccounts/{principal}"
 
+        apis = project_data['providers'][project_name]['apis']
+
         all_action_states[project_name] = action_states = {}
 
         resp = __make_project(project_id, project_name)
         action_states['make_project'] = resp
         if resp == ActionState.FAILED:
-            action_states['make_account'] = action_states['config_account'] = action_states['make_key'] = ActionState.FAILED
+            action_states["enable_apis"] = action_states["link_billing"] = action_states['make_account'] = action_states['config_account'] = action_states['make_key'] = ActionState.FAILED
             continue
 
         resp = __make_service_account(project_id, account_id, resource)
@@ -123,10 +179,10 @@ def create_gcp(project_data : PROJECT_DATA_T) -> tuple[dict[str, dict[str, Actio
             continue
 
         action_states['make_key'] = __make_service_account_key(account_id, resource, project_data['providers'][project_name])
-        
         action_states['config_account'] = __config_service_account(project_id, principal)
-    
-    tf_bucket_project_name = project_data['tf_state_project']
+        action_states['enable_apis'] = __enable_apis(project_id, apis)
+        action_states['link_billing'] = __link_billing_account(project_id, billing_account_id)
+
     all_action_states[tf_bucket_project_name]['make_bucket'], bucket = __make_tfstate_bucket(project_data['project_id_prefix'] + tf_bucket_project_name)
 
     return all_action_states, bucket

@@ -1,9 +1,11 @@
+variable "region" {
+    description = "region"
+}
 
-variable "providers" {
-    type = list(object({
-        alias = string 
-        project = string 
-        credentials = string 
-    }))
-    default = jsondecode(file("./data/project.json"))["providers"]
+variable "project_id" {
+    description = "project ID"
+}
+
+variable "project_number" {
+    description = "project number"
 }

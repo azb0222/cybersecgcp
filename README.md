@@ -32,3 +32,9 @@ TODO
 
 ### Making the projects
 You can configure the projects you want in the [projects.json](./data/projects.json) file then simply run the [setup.py](./setup.py) script to provision them.
+
+---
+## CTF Infra 
+1) need to manually setup Github Host connection for Cloud Build
+   https://cloud.google.com/build/docs/automating-builds/github/connect-repo-github
+2) 

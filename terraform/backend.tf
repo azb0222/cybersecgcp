@@ -1,6 +1,8 @@
+#========== AUTO GENERATED ==========
+
 terraform {
- backend "gcs" {
-   bucket  = "6186e1677ac0ea2d-bucket-tfstate" 
-   prefix  = "terraform/state"
- }
+    backend "gcs" { 
+        bucket = "zo0eun_umasscybersec_tfstate"
+        prefix = "terraform/state"
+    }
 }

@@ -16,7 +16,7 @@ def __make_providers(project_data: PROJECT_DATA_T) -> ActionState:
                 provider['project'] = project
                 content = provider_template.render(provider)
                 f.write(f"{content}\n")
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Could not generate provider.tf because:\n{e}")
         return ActionState.FAILED
@@ -25,7 +25,7 @@ def __copy_data() -> ActionState:
     print("[INFO] Copying data into terraform")
     try:
         copytree(DATA_PATH, from_terraform("data"), dirs_exist_ok=True)
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Could not copy data because:\n{e}")
         return ActionState.FAILED
@@ -34,10 +34,10 @@ def __make_backend(bucket: Bucket) -> ActionState:
     print("[INFO] Generating backend.tf")
     try:
         backend_template = environment.get_template("backend.txt")
-        with open("backend.tf", "w") as f:
+        with open(from_terraform("backend.tf"), "w") as f:
             f.write(BANNER)
             f.write(f"{backend_template.render(bucket_id=bucket.id)}")
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Could not generate backend.tf because:\n{e}")
         return ActionState.FAILED
@@ -48,6 +48,3 @@ def generate_tf(project_data: PROJECT_DATA_T, bucket: Bucket) -> dict[str, Actio
         "copy_data": __copy_data(),
         "make_backend": __make_backend(bucket),
     }
-
-if __name__ == "__main__":
-    generate_tf()

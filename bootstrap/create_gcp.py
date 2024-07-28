@@ -5,14 +5,14 @@ from googleapiclient import discovery
 import random
 import string
 from os.path import join, isfile
-from os import system, makedirs
+from os import makedirs
 
 from config import PROJECT_DATA_T, KEY_PATH, ActionState
 
 print("[INFO] Creating GCP clients...")
 
 resource_client = resource_manager.Client()
-iam_client = iam_admin.IAMClient()
+iam_client = iam_admin  .IAMClient()
 discovery_client = discovery.build('iam', 'v1')
 service_client = service_usage.ServiceUsageClient()
 billing_client = billing.CloudBillingClient()
@@ -33,12 +33,12 @@ def __make_project(project_id: str, project_name: str) -> ActionState:
             project.labels = {"source": "tf"}
             project.update()
             
-            return ActionState.COMPLTE
+            return ActionState.COMPLETE
         except Exception as e:
             print(f"[ERROR] Unable to create project {project_id} because:\n{e}") 
             return ActionState.FAILED
 
-#TODO make seperate action states for each api
+#TODO make separate action states for each api
 def __enable_apis(project_id : str, apis : list[str]) -> ActionState:
     print(f"[INFO] Enabling APIs for {project_id}...")
     try:
@@ -48,7 +48,7 @@ def __enable_apis(project_id : str, apis : list[str]) -> ActionState:
             resp = service_client.enable_service(request=req).result()
             if(resp.service.state != service_usage.State.ENABLED):
                 raise Exception(f"Failed to enable {api}")
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Unable to enable apis for {project_id} because:\n{e}") 
         return ActionState.FAILED
@@ -63,7 +63,7 @@ def __link_billing_account(project_id, billing_account_id):
             project_billing_info=project_billing_info
             )
         billing_client.update_project_billing_info(request=req)
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Unable to link billing account {billing_account_id} to {project_id} because:\n{e}") 
         return ActionState.FAILED
@@ -82,7 +82,7 @@ def __make_service_account(project_id, account_id, resource) -> ActionState:
                 "name": f"projects/{project_id}",
                 "account_id": account_id
         })
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Failed to create account {account_id} because:\n{e}")
         return ActionState.FAILED
@@ -105,7 +105,7 @@ def __config_service_account(project_id, principal) -> ActionState:
 
         body = {"policy": policy}
         discovery_client.projects().serviceAccounts().setIamPolicy(resource=resource, body=body).execute()
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Failed to create role binding for {principal} because:\n{e}")
         return ActionState.FAILED
@@ -128,21 +128,21 @@ def __make_service_account_key(account_id, resource, project_data) -> ActionStat
             f.write(key.private_key_data)
         #TODO make not hardcoded
         project_data['credentials'] = f"../keys/{account_id}.json"
-        return ActionState.COMPLTE
+        return ActionState.COMPLETE
     except Exception as e:
         print(f"[ERROR] Failed to generate key for {account_id} because:\n{e}")
         return ActionState.FAILED
 
 def __make_tfstate_bucket(project_id) -> tuple[ActionState, storage.Bucket | None]:  
     storage_client = storage.Client(project=project_id) #the general project
-    random_string = ''.join(random.choices(string.ascii_lowercase+ string.digits, k=6))
-    bucket_name = random_string + "_umasscybersec_tfstate"
+    random_string = ''.join(random.choices(string.ascii_lowercase+ string.digits, k=8))
+    bucket_name = random_string + "_tfstate"
     
     print(f"[INFO] Creating bucket {bucket_name} in the US")
     try:
         bucket = storage_client.bucket(bucket_name)
         new_bucket = storage_client.create_bucket(bucket, location="us")
-        return ActionState.COMPLTE, new_bucket
+        return ActionState.COMPLETE, new_bucket
     except Exception as e:
         print(f"[ERROR] Failed to generate bucket because:\n{e}")
         return ActionState.FAILED, None

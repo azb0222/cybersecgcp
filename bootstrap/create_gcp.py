@@ -68,84 +68,85 @@ def __link_billing_account(project_id, billing_account_id):
         print(f"[ERROR] Unable to link billing account {billing_account_id} to {project_id} because:\n{e}") 
         return ActionState.FAILED
 
-def __make_service_account(project_id, account_id, resource) -> ActionState:
-    accounts = iam_client.list_service_accounts({"name": f"projects/{project_id}"})    
-    accounts = map(lambda account : account.name, accounts)
+# def __make_service_account(project_id, account_id, resource) -> ActionState:
+#     try:
+#         accounts = iam_client.list_service_accounts({"name": f"projects/{project_id}"})    
+#         accounts = map(lambda account : account.name, accounts)
 
-    if resource in accounts:
-        print(f"[INFO] Account {account_id} already exists")
-        return ActionState.EXISTS
+#         if resource in accounts:
+#             print(f"[INFO] Account {account_id} already exists")
+#             return ActionState.EXISTS
+
+#         print(f"[INFO] Creating account {account_id}")
+
+#         iam_client.create_service_account({
+#                 "name": f"projects/{project_id}",
+#                 "account_id": account_id
+#         })
+#         return ActionState.COMPLETE
+#     except Exception as e:
+#         print(f"[ERROR] Failed to create account {account_id} because:\n{e}")
+#         return ActionState.FAILED
+
+# def __config_service_account(project_id, principal) -> ActionState:
+#     # create service account IAM policymakedirs binding
+#     # TODO create custom role for service accounts
+#     print(f"[INFO] Creating role binding for {principal}")
+#     try:
+#         resource = f"projects/{project_id}/serviceAccounts/{principal}"
+#         policy = discovery_client.projects().serviceAccounts().getIamPolicy(resource=resource).execute()
+#         if not "bindings" in policy:
+#             policy["bindings"] = []
+#         policy["bindings"].append({
+#                 "role": "roles/editor",
+#                 "members": [
+#                     f"serviceAccount:{principal}"
+#                 ]
+#             })
+
+#         body = {"policy": policy}
+#         discovery_client.projects().serviceAccounts().setIamPolicy(resource=resource, body=body).execute()
+#         return ActionState.COMPLETE
+#     except Exception as e:
+#         print(f"[ERROR] Failed to create role binding for {principal} because:\n{e}")
+#         return ActionState.FAILED
+
+# def __make_service_account_key(account_id, resource, project_data) -> ActionState:
+#     # create service account key
+#     key_file_name = f"{join(KEY_PATH, account_id)}.json"
+#     if isfile(key_file_name):
+#         print(f"[INFO] Key for {account_id} already exists")
+#         #TODO make not hardcoded
+#         project_data['credentials'] = f"../keys/{account_id}.json"
+#         return ActionState.EXISTS
     
-    print(f"[INFO] Creating account {account_id}")
-    try:
-        iam_client.create_service_account({
-                "name": f"projects/{project_id}",
-                "account_id": account_id
-        })
-        return ActionState.COMPLETE
-    except Exception as e:
-        print(f"[ERROR] Failed to create account {account_id} because:\n{e}")
-        return ActionState.FAILED
+#     print(f"[INFO] Generating key for {account_id}")
+#     try:
+#         key = iam_client.create_service_account_key({
+#             "name": resource
+#         })
+#         with open(key_file_name, 'wb') as f:
+#             f.write(key.private_key_data)
+#         #TODO make not hardcoded
+#         project_data['credentials'] = f"../keys/{account_id}.json"
+#         return ActionState.COMPLETE
+#     except Exception as e:
+#         print(f"[ERROR] Failed to generate key for {account_id} because:\n{e}")
+#         return ActionState.FAILED
 
-def __config_service_account(project_id, principal) -> ActionState:
-    # create service account IAM policymakedirs binding
-    # TODO create custom role for service accounts
-    print(f"[INFO] Creating role binding for {principal}")
-    try:
-        resource = f"projects/{project_id}/serviceAccounts/{principal}"
-        policy = discovery_client.projects().serviceAccounts().getIamPolicy(resource=resource).execute()
-        if not "bindings" in policy:
-            policy["bindings"] = []
-        policy["bindings"].append({
-                "role": "roles/editor",
-                "members": [
-                    f"serviceAccount:{principal}"
-                ]
-            })
-
-        body = {"policy": policy}
-        discovery_client.projects().serviceAccounts().setIamPolicy(resource=resource, body=body).execute()
-        return ActionState.COMPLETE
-    except Exception as e:
-        print(f"[ERROR] Failed to create role binding for {principal} because:\n{e}")
-        return ActionState.FAILED
-
-def __make_service_account_key(account_id, resource, project_data) -> ActionState:
-    # create service account key
-    key_file_name = f"{join(KEY_PATH, account_id)}.json"
-    if isfile(key_file_name):
-        print(f"[INFO] Key for {account_id} already exists")
-        #TODO make not hardcoded
-        project_data['credentials'] = f"../keys/{account_id}.json"
-        return ActionState.EXISTS
+# def __make_tfstate_bucket(project_id) -> tuple[ActionState, storage.Bucket | None]:  
+#     storage_client = storage.Client(project=project_id) #the general project
+#     random_string = ''.join(random.choices(string.ascii_lowercase+ string.digits, k=8))
+#     bucket_name = random_string + "_tfstate"
     
-    print(f"[INFO] Generating key for {account_id}")
-    try:
-        key = iam_client.create_service_account_key({
-            "name": resource
-        })
-        with open(key_file_name, 'wb') as f:
-            f.write(key.private_key_data)
-        #TODO make not hardcoded
-        project_data['credentials'] = f"../keys/{account_id}.json"
-        return ActionState.COMPLETE
-    except Exception as e:
-        print(f"[ERROR] Failed to generate key for {account_id} because:\n{e}")
-        return ActionState.FAILED
-
-def __make_tfstate_bucket(project_id) -> tuple[ActionState, storage.Bucket | None]:  
-    storage_client = storage.Client(project=project_id) #the general project
-    random_string = ''.join(random.choices(string.ascii_lowercase+ string.digits, k=8))
-    bucket_name = random_string + "_tfstate"
-    
-    print(f"[INFO] Creating bucket {bucket_name} in the US")
-    try:
-        bucket = storage_client.bucket(bucket_name)
-        new_bucket = storage_client.create_bucket(bucket, location="us")
-        return ActionState.COMPLETE, new_bucket
-    except Exception as e:
-        print(f"[ERROR] Failed to generate bucket because:\n{e}")
-        return ActionState.FAILED, None
+#     print(f"[INFO] Creating bucket {bucket_name} in the US")
+#     try:
+#         bucket = storage_client.bucket(bucket_name)
+#         new_bucket = storage_client.create_bucket(bucket, location="us")
+#         return ActionState.COMPLETE, new_bucket
+#     except Exception as e:
+#         print(f"[ERROR] Failed to generate bucket because:\n{e}")
+#         return ActionState.FAILED, None
 
 def create_gcp(project_data : PROJECT_DATA_T) -> tuple[dict[str, dict[str, ActionState]], storage.Bucket | None]:
     global project_ids
@@ -176,20 +177,21 @@ def create_gcp(project_data : PROJECT_DATA_T) -> tuple[dict[str, dict[str, Actio
             action_states["enable_apis"] = action_states["link_billing"] = action_states['make_account'] = action_states['config_account'] = action_states['make_key'] = ActionState.FAILED
             continue
 
-        resp = __make_service_account(project_id, account_id, resource)
-        action_states['make_account'] = resp
-        if resp == ActionState.FAILED:
-            action_states['config_account'] = action_states['make_key'] = ActionState.FAILED
-            continue
-
-        action_states['make_key'] = __make_service_account_key(account_id, resource, project_data['providers'][project_name])
-        action_states['config_account'] = __config_service_account(project_id, principal)
         action_states['enable_apis'] = __enable_apis(project_id, apis)
         action_states['link_billing'] = __link_billing_account(project_id, billing_account_id)
 
-    all_action_states[tf_bucket_project_name]['make_bucket'], bucket = __make_tfstate_bucket(project_data['project_id_prefix'] + tf_bucket_project_name)
+    #     resp = __make_service_account(project_id, account_id, resource)
+    #     action_states['make_account'] = resp
+    #     if resp == ActionState.FAILED:
+    #         action_states['config_account'] = action_states['make_key'] = ActionState.FAILED
+    #         continue
 
-    return all_action_states, bucket
+    #     action_states['make_key'] = __make_service_account_key(account_id, resource, project_data['providers'][project_name])
+    #     action_states['config_account'] = __config_service_account(project_id, principal)
+
+    # all_action_states[tf_bucket_project_name]['make_bucket'], bucket = __make_tfstate_bucket(project_data['project_id_prefix'] + tf_bucket_project_name)
+
+    return all_action_states
 
 
 if __name__ == "__main__":

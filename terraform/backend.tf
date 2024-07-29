@@ -2,7 +2,7 @@
 
 terraform {
     backend "gcs" { 
-        bucket = "zo0eun_umasscybersec_tfstate"
+        bucket = "r15t1jqn_tfstate"
         prefix = "terraform/state"
     }
 }

@@ -30,21 +30,20 @@ def __copy_data() -> ActionState:
         print(f"[ERROR] Could not copy data because:\n{e}")
         return ActionState.FAILED
 
-def __make_backend(bucket: Bucket) -> ActionState:
-    print("[INFO] Generating backend.tf")
-    try:
-        backend_template = environment.get_template("backend.txt")
-        with open(from_terraform("backend.tf"), "w") as f:
-            f.write(BANNER)
-            f.write(f"{backend_template.render(bucket_id=bucket.id)}")
-        return ActionState.COMPLETE
-    except Exception as e:
-        print(f"[ERROR] Could not generate backend.tf because:\n{e}")
-        return ActionState.FAILED
+# def __make_backend(bucket: Bucket) -> ActionState:
+#     print("[INFO] Generating backend.tf")
+#     try:
+#         backend_template = environment.get_template("backend.txt")
+#         with open(from_terraform("backend.tf"), "w") as f:
+#             f.write(BANNER)
+#             f.write(f"{backend_template.render(bucket_id=bucket.id)}")
+#         return ActionState.COMPLETE
+#     except Exception as e:
+#         print(f"[ERROR] Could not generate backend.tf because:\n{e}")
+#         return ActionState.FAILED
     
-def generate_tf(project_data: PROJECT_DATA_T, bucket: Bucket) -> dict[str, ActionState]:
+def generate_tf(project_data: PROJECT_DATA_T) -> dict[str, ActionState]:
     return {
         "make_providers": __make_providers(project_data),
         "copy_data": __copy_data(),
-        "make_backend": __make_backend(bucket),
     }
